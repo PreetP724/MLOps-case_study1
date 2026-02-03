@@ -22,6 +22,6 @@ jobs:
           git config --global credential.helper store
           printf "https://user:%s@huggingface.co\n" "$HF_TOKEN" > ~/.git-credentials
       - name: Push to hub
-        run: 
+        run: |
           git remote add hf https://huggingface.co/spaces/PreetP724/case_study1 || true
           git push --force hf HEAD:main
