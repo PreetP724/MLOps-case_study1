@@ -1,7 +1,7 @@
 name: Sync to Hugging Face hub
 on:
   push:
-    branches: [case_study_1_2025]
+    branches: [main]
 
   # to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -12,9 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          ref: main
+          fetch-depth: 1
           lfs: true
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://rcpaffenroth:$HF_TOKEN@huggingface.co/spaces/rcpaffenroth/CSDS553_Demo HEAD:main
+        run: git push https://PreetP724:$HF_TOKEN@huggingface.co/spaces/PreetP724/case_study1 main
