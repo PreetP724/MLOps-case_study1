@@ -1,7 +1,7 @@
 import gradio as gr
 from huggingface_hub import InferenceClient
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-import torch 
+
+
 import os
 
 pipe = None
@@ -87,6 +87,8 @@ def respond(
         print("[MODE] local")
         
         if pipe is None:
+            from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+            import torch
             tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct")
 
             model = AutoModelForCausalLM.from_pretrained(
