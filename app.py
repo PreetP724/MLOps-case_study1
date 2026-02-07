@@ -124,7 +124,7 @@ def respond(
 
         client = InferenceClient(token=hf_token.token, model="openai/gpt-oss-20b")
 
-
+        response = ""
 
         for chunk in client.chat_completion(
             messages,
