@@ -13,7 +13,6 @@ def test_api_requires_token():
     gen = app.respond(
         message="Hi",
         history=[],
-        system_message="test",
         max_tokens=8,
         temperature=0.2,
         top_p=0.9,
