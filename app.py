@@ -4,9 +4,7 @@ from huggingface_hub import InferenceClient
 
 import os
 
-print("=== APP STARTING ===")
-print(f"PORT: {os.environ.get('PORT')}")
-print(f"HF_TOKEN set: {bool(os.environ.get('HF_TOKEN'))}")
+
 pipe = None
 stop_inference = False
 tokenizer = None
