@@ -4,6 +4,9 @@ from huggingface_hub import InferenceClient
 
 import os
 
+print("=== APP STARTING ===")
+print(f"PORT: {os.environ.get('PORT')}")
+print(f"HF_TOKEN set: {bool(os.environ.get('HF_TOKEN'))}")
 pipe = None
 stop_inference = False
 tokenizer = None
@@ -48,6 +51,7 @@ fancy_css = """
 }
 """
 
+hf_token = os.environ.get("hf_token")
 
 def respond(
     message,
@@ -55,8 +59,6 @@ def respond(
     max_tokens,
     temperature,
     top_p,
-    hf_token: gr.OAuthToken,
-    use_local_model: bool,
 ):
     
     global pipe, tokenizer
@@ -83,64 +85,26 @@ def respond(
     
     messages.append({"role": "user", "content": str(message)})
 
-    if use_local_model:
-        print("[MODE] local")
-        
-        if pipe is None:
-            from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-            import torch
-            tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct")
+    print("[MODE] api")
 
-            model = AutoModelForCausalLM.from_pretrained(
-            "Qwen/Qwen2.5-1.5B-Instruct",
-            torch_dtype=torch.float16,
-            device_map="cpu",
-            low_cpu_mem_usage=True)
 
-            pipe = pipeline("text-generation", model=model, tokenizer = tokenizer, device =-1)
+    client = InferenceClient(token=hf_token, model="openai/gpt-oss-20b")
 
-        
-        prompt = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
+    response = ""
 
-        outputs = pipe(
-            prompt,
-            max_new_tokens=max_tokens,
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
-        )
-
-        response = outputs[0]["generated_text"][len(prompt):]
-        yield response.strip()
-
-    else:
-        print("[MODE] api")
-
-        if hf_token is None or not getattr(hf_token, "token", None):
-            yield "⚠️ Please log in with your Hugging Face account first."
-            return
-
-        client = InferenceClient(token=hf_token.token, model="openai/gpt-oss-20b")
-
-        response = ""
-
-        for chunk in client.chat_completion(
-            messages,
-            max_tokens=max_tokens,
-            stream=True,
-            temperature=temperature,
-            top_p= top_p,
-        ):
-            choices = chunk.choices
-            token = ""
-            if len(choices) and choices[0].delta.content:
-                token = choices[0].delta.content
-            response += token
-            yield response
+    for chunk in client.chat_completion(
+        messages,
+        max_tokens=max_tokens,
+        stream=True,
+        temperature=temperature,
+        top_p= top_p,
+    ):
+        choices = chunk.choices
+        token = ""
+        if len(choices) and choices[0].delta.content:
+            token = choices[0].delta.content
+        response += token
+        yield response
 
 
 chatbot = gr.ChatInterface(
@@ -149,7 +113,6 @@ chatbot = gr.ChatInterface(
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max new tokens"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
         gr.Slider(minimum=0.1, maximum=1.0, value=0.95, step=0.05, label="Top-p (nucleus sampling)"),
-        gr.Checkbox(label="Use Local Model", value=False),
     ],
    
     
@@ -158,9 +121,8 @@ chatbot = gr.ChatInterface(
 with gr.Blocks(css=fancy_css, theme = gr.themes.Soft()) as demo:
     with gr.Row():
         gr.Markdown("<h1 style='text-align: center; color:#4CAF50'>🌟 Learning Assistant 🌟</h1>")
-        gr.LoginButton()
         gr.Image("dino.png", show_label=False)
     chatbot.render()
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=7860)
